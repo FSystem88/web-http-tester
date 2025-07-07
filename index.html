@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="JavaScript, POST, GET, HTTP, form, testing, web development">
+    <meta name="description" content="Tool for testing POST and GET requests with a modern interface and enhanced logging">
+    <title>HTTP Request Tester</title>
+    <link href="/css/tailwind.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <script src="/js/i18next.min.js"></script>
+    <script src="/js/i18nextBrowserLanguageDetector.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --bg-color: #f3f4f6;
+            --card-bg: white;
+            --text-color: #1f2937;
+            --input-bg: #ffffff;
+        }
+
+		::-webkit-scrollbar {
+			width: 6px;
+			background: transparent;
+		}
+
+		::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: rgba(107, 114, 128, 0.5);
+			border-radius: 9999px;
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+			background: rgba(107, 114, 128, 0.8);
+		}
+
+		[data-theme="dark"] ::-webkit-scrollbar-thumb {
+			background: rgba(34, 197, 94, 0.5);
+		}
+
+		[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+			background: rgba(34, 197, 94, 0.8);
+		}
+
+		.card, .accordion-content, .log-content {
+			scrollbar-width: thin;
+			scrollbar-color: rgba(107, 114, 128, 0.5) transparent;
+		}
+
+		[data-theme="dark"] .card, [data-theme="dark"] .accordion-content, [data-theme="dark"] .log-content {
+			scrollbar-color: rgba(34, 197, 94, 0.5) transparent;
+		}
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #22c55e;
+            --input-bg: #3d3d3d;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            max-width: 90rem;
+            margin: 0 auto;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            height: calc(100vh - 3rem);
+            overflow-y: auto;
+        }
+
+        .iframe-card, .log-card {
+            height: calc(100vh - 3rem);
+        }
+
+        #response-frame {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background: var(--input-bg);
+        }
+
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.75rem;
+            background: #e5e7eb;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+
+        [data-theme="dark"] .accordion-header {
+            background: #3d3d3d;
+        }
+
+        .accordion-content {
+            max-height: 12rem;
+            overflow-y: auto;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            display: none;
+        }
+
+        .accordion-content.show {
+            display: block;
+        }
+
+        .table-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .stats {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-top: 0.5rem;
+        }
+
+        [data-theme="dark"] .stats {
+            color: var(--text-color);
+        }
+
+        .running {
+            background-color: var(--success-color) !important;
+        }
+
+        .running:hover {
+            background-color: #16a34a !important;
+        }
+
+        .theme-language {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .theme-language button, .theme-language select {
+            background: var(--card-bg);
+            color: var(--text-color);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-language select {
+            appearance: none;
+            padding-right: 2rem;
+        }
+
+        .log-card .accordion-content {
+            max-height: none;
+            height: calc(100% - 2.5rem);
+        }
+
+        .log-entry-header {
+            background: #e5e7eb;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+        }
+
+        [data-theme="dark"] .log-entry-header {
+            background: #22c55e;
+        }
+		
+
+        .log-entry-content {
+            display: none;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+		[data-theme="dark"] .log-entry-content {
+			color: #22c55e;
+			background: #1a1a1a;
+
+		}
+
+        .log-entry-content.show {
+            display: block;
+        }
+
+		[data-theme="dark"] .log-entry-content.show {
+			color: #22c55e;
+			background: #1a1a1a;
+			
+		}
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .card, .iframe-card, .log-card {
+                height: auto;
+            }
+
+            #response-frame {
+                height: 18rem;
+            }
+
+            .accordion-content {
+                max-height: 9rem;
+            }
+
+            .log-card .accordion-content {
+                max-height: 18rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .button-group button {
+                width: 100%;
+                max-width: 12rem;
+            }
+
+            .theme-language {
+                position: static;
+                justify-content: center;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <div class="theme-language">
+            <button onclick="toggleTheme()" title="Toggle Theme">
+                <i class="fas fa-moon"></i> Theme
+            </button>
+            <select id="language" onchange="changeLanguage()">
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="zh">中文</option>
+                <option value="ja">日本語</option>
+            </select>
+        </div>
+        <div class="card">
+            <h1 class="text-2xl font-bold text-center mb-6" data-i18n="title">HTTP Request Tester</h1>
+            <form id="config-form">
+                <div class="mb-4">
+                    <label for="url" class="block text-sm font-medium" data-i18n="url_label">URL:</label>
+                    <input type="url" id="url" value="https://example.com" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md table-input">
+                </div>
+                <div class="mb-4">
+                    <label for="method" class="block text-sm font-medium" data-i18n="method_label">Method:</label>
+                    <select id="method" name="method" class="mt-1 block w-full p-2 border border-gray-300 rounded-md table-input">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="enctype" class="block text-sm font-medium" data-i18n="enctype_label">Encoding:</label>
+                    <select id="enctype" name="enctype" class="mt-1 block w-full p-2 border border-gray-300 rounded-md table-input">
+                        <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                        <option value="multipart/form-data">multipart/form-data</option>
+                        <option value="text/plain">text/plain</option>
+                        <option value="application/json">application/json</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="interval" class="block text-sm font-medium" data-i18n="interval_label">Repeat every (sec):</label>
+                    <input type="number" id="interval" value="0" min="0" step="1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md table-input">
+                </div>
+            </form>
+            <div class="mt-4">
+                <div class="accordion-header" onclick="toggleSection('headers-content', 'headers-toggle')">
+                    <span data-i18n="headers_title">Headers</span>
+                    <span id="headers-toggle"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="accordion-content" id="headers-content">
+                    <div class="mb-4 flex gap-4">
+                        <label><input type="radio" name="headers-format" value="fields" onchange="toggleHeadersInput()"> Fields</label>
+                        <label><input type="radio" name="headers-format" value="json" checked onchange="toggleHeadersInput()"> JSON</label>
+                    </div>
+                    <div id="headers-fields" class="hidden">
+                        <table class="w-full mb-4" id="header-table">
+                            <tr>
+                                <td class="p-2"><label class="text-sm font-medium" data-i18n="name_label">Name</label></td>
+                                <td class="p-2"><label class="text-sm font-medium" data-i18n="value_label">Value</label></td>
+                            </tr>
+                            <tr>
+                                <td class="p-2"><input type="text" class="table-input header-name" value="Accept"></td>
+                                <td class="p-2"><input type="text" class="table-input header-value" value="application/json"></td>
+                            </tr>
+                            <tr>
+                                <td class="p-2"><input type="text" class="table-input header-name" value="Content-Type"></td>
+                                <td class="p-2"><input type="text" class="table-input header-value" value="application/json"></td>
+                            </tr>
+                        </table>
+                        <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onclick="addHeaderRow()" data-i18n="add_header">Add Header</button>
+                    </div>
+                    <div id="headers-json">
+                        <textarea id="headers-json-input" rows="5" class="w-full p-2 border border-gray-300 rounded-md table-input" placeholder='{"Accept": "application/json", "Content-Type": "application/json"}'></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="accordion-header" onclick="toggleSection('data-content', 'data-toggle')">
+                    <span data-i18n="data_title">Data</span>
+                    <span id="data-toggle"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="accordion-content" id="data-content">
+                    <div class="mb-4 flex gap-4">
+                        <label><input type="radio" name="data-format" value="fields" onchange="toggleDataInput()"> Fields</label>
+                        <label><input type="radio" name="data-format" value="json" checked onchange="toggleDataInput()"> JSON</label>
+                    </div>
+                    <div id="data-fields" class="hidden">
+                        <table class="w-full mb-4" id="param-table">
+                            <tr>
+                                <td class="p-2"><label class="text-sm font-medium" data-i18n="name_label">Name</label></td>
+                                <td class="p-2"><label class="text-sm font-medium" data-i18n="value_label">Value</label></td>
+                            </tr>
+                            <tr>
+                                <td class="p-2"><input type="text" class="table-input param-name" placeholder="Parameter name"></td>
+                                <td class="p-2"><input type="text" class="table-input param-value" placeholder="Parameter value"></td>
+                            </tr>
+                        </table>
+                        <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onclick="addParamRow()" data-i18n="add_param">Add Parameter</button>
+                    </div>
+                    <div id="data-json">
+                        <textarea id="data-json-input" rows="5" class="w-full p-2 border border-gray-300 rounded-md table-input" placeholder='{"key": "value"}'></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="stats">
+                <span data-i18n="req_per_sec">Requests per second:</span> <span id="req-per-sec">0</span> | 
+                <span data-i18n="total_req">Total requests:</span> <span id="total-req">0</span>
+            </div>
+            <form id="post-form" target="response-frame">
+                <div class="button-group flex gap-2 justify-center mt-4">
+                    <button type="button" id="send-btn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onclick="sendRequest()" data-i18n="send">Send</button>
+                    <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600" onclick="clearForm()" data-i18n="clear">Clear</button>
+                    <button type="button" id="stop-btn" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600" onclick="stopInterval()" data-i18n="stop">Stop Repeats</button>
+                </div>
+            </form>
+        </div>
+        <div class="card iframe-card">
+            <iframe id="response-frame" name="response-frame"></iframe>
+        </div>
+        <div class="card log-card">
+            <div class="log-content" id="log-content">
+                <div id="log-entries" class="text-sm"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        i18next.use(i18nextBrowserLanguageDetector).init({
+            fallbackLng: 'en',
+            resources: {
+                en: {
+                    translation: {
+                        title: "HTTP Request Tester",
+                        url_label: "URL",
+                        method_label: "Method",
+                        enctype_label: "Encoding",
+                        interval_label: "Repeat every (sec)",
+                        headers_title: "Headers",
+                        data_title: "Data",
+                        name_label: "Name",
+                        value_label: "Value",
+                        add_header: "Add Header",
+                        add_param: "Add Parameter",
+                        req_per_sec: "Requests per second",
+                        total_req: "Total requests",
+                        send: "Send",
+                        clear: "Clear",
+                        stop: "Stop Repeats",
+                        status: "Status",
+                        response_body: "Response Body",
+                        request_headers: "Request Headers",
+                        response_headers: "Response Headers",
+                        parameters: "Parameters"
+                    }
+                },
+                ru: {
+                    translation: {
+                        title: "Тестер HTTP-запросов",
+                        url_label: "Адрес",
+                        method_label: "Метод",
+                        enctype_label: "Кодирование",
+                        interval_label: "Повторять каждые (сек)",
+                        headers_title: "Заголовки",
+                        data_title: "Данные",
+                        name_label: "Имя",
+                        value_label: "Значение",
+                        add_header: "Добавить заголовок",
+                        add_param: "Добавить параметр",
+                        req_per_sec: "Запросов в секунду",
+                        total_req: "Всего запросов",
+                        send: "Отправить",
+                        clear: "Очистить",
+                        stop: "Остановить повторы",
+                        status: "Статус",
+                        response_body: "Тело ответа",
+                        request_headers: "Заголовки запроса",
+                        response_headers: "Заголовки ответа",
+                        parameters: "Параметры"
+                    }
+                },
+                es: {
+                    translation: {
+                        title: "Probador de solicitudes HTTP",
+                        url_label: "URL",
+                        method_label: "Método",
+                        enctype_label: "Codificación",
+                        interval_label: "Repetir cada (seg)",
+                        headers_title: "Encabezados",
+                        data_title: "Datos",
+                        name_label: "Nombre",
+                        value_label: "Valor",
+                        add_header: "Añadir encabezado",
+                        add_param: "Añadir parámetro",
+                        req_per_sec: "Solicitudes por segundo",
+                        total_req: "Solicitudes totales",
+                        send: "Enviar",
+                        clear: "Limpiar",
+                        stop: "Detener repeticiones",
+                        status: "Estado",
+                        response_body: "Cuerpo de la respuesta",
+                        request_headers: "Encabezados de solicitud",
+                        response_headers: "Encabezados de respuesta",
+                        parameters: "Parámetros"
+                    }
+                },
+                fr: {
+                    translation: {
+                        title: "Testeur de requêtes HTTP",
+                        url_label: "URL",
+                        method_label: "Méthode",
+                        enctype_label: "Encodage",
+                        interval_label: "Répéter toutes les (sec)",
+                        headers_title: "En-têtes",
+                        data_title: "Données",
+                        name_label: "Nom",
+                        value_label: "Valeur",
+                        add_header: "Ajouter un en-tête",
+                        add_param: "Ajouter un paramètre",
+                        req_per_sec: "Requêtes par seconde",
+                        total_req: "Total des requêtes",
+                        send: "Envoyer",
+                        clear: "Effacer",
+                        stop: "Arrêter les répétitions",
+                        status: "Statut",
+                        response_body: "Corps de la réponse",
+                        request_headers: "En-têtes de requête",
+                        response_headers: "En-têtes de réponse",
+                        parameters: "Paramètres"
+                    }
+                },
+                de: {
+                    translation: {
+                        title: "HTTP-Anfragen-Tester",
+                        url_label: "URL",
+                        method_label: "Methode",
+                        enctype_label: "Kodierung",
+                        interval_label: "Wiederholen alle (Sek)",
+                        headers_title: "Header",
+                        data_title: "Daten",
+                        name_label: "Name",
+                        value_label: "Wert",
+                        add_header: "Header hinzufügen",
+                        add_param: "Parameter hinzufügen",
+                        req_per_sec: "Anfragen pro Sekunde",
+                        total_req: "Gesamtanzahl Anfragen",
+                        send: "Senden",
+                        clear: "Löschen",
+                        stop: "Wiederholungen stoppen",
+                        status: "Status",
+                        response_body: "Antwortkörper",
+                        request_headers: "Anfrage-Header",
+                        response_headers: "Antwort-Header",
+                        parameters: "Parameter"
+                    }
+                },
+                zh: {
+                    translation: {
+                        title: "HTTP请求测试器",
+                        url_label: "URL",
+                        method_label: "方法",
+                        enctype_label: "编码",
+                        interval_label: "每秒重复（秒）",
+                        headers_title: "请求头",
+                        data_title: "数据",
+                        name_label: "名称",
+                        value_label: "值",
+                        add_header: "添加请求头",
+                        add_param: "添加参数",
+                        req_per_sec: "每秒请求数",
+                        total_req: "总请求数",
+                        send: "发送",
+                        clear: "清除",
+                        stop: "停止重复",
+                        status: "状态",
+                        response_body: "响应主体",
+                        request_headers: "请求头",
+                        response_headers: "响应头",
+                        parameters: "参数"
+                    }
+                },
+                ja: {
+                    translation: {
+                        title: "HTTPリクエストテスター",
+                        url_label: "URL",
+                        method_label: "メソッド",
+                        enctype_label: "エンコーディング",
+                        interval_label: "繰り返し間隔（秒）",
+                        headers_title: "ヘッダー",
+                        data_title: "データ",
+                        name_label: "名前",
+                        value_label: "値",
+                        add_header: "ヘッダーを追加",
+                        add_param: "パラメータを追加",
+                        req_per_sec: "秒あたりのリクエスト",
+                        total_req: "合計リクエスト",
+                        send: "送信",
+                        clear: "クリア",
+                        stop: "繰り返しを停止",
+                        status: "ステータス",
+                        response_body: "レスポンスボディ",
+                        request_headers: "リクエストヘッダー",
+                        response_headers: "レスポンスヘッダー",
+                        parameters: "パラメータ"
+                    }
+                }
+            }
+        }, () => {
+            document.querySelectorAll('[data-i18n]').forEach(elem => {
+                elem.textContent = i18next.t(elem.getAttribute('data-i18n'));
+            });
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
+            document.querySelector('.theme-language button i').className = currentTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function changeLanguage() {
+            const lang = document.getElementById('language').value;
+            i18next.changeLanguage(lang, () => {
+                document.querySelectorAll('[data-i18n]').forEach(elem => {
+                    elem.textContent = i18next.t(elem.getAttribute('data-i18n'));
+                });
+                updatePlaceholders();
+            });
+        }
+
+        function updatePlaceholders() {
+            document.querySelectorAll('.param-name').forEach(input => {
+                input.placeholder = i18next.t('name_label');
+            });
+            document.querySelectorAll('.param-value').forEach(input => {
+                input.placeholder = i18next.t('value_label');
+            });
+            document.querySelectorAll('.header-name').forEach(input => {
+                input.placeholder = i18next.t('name_label');
+            });
+            document.querySelectorAll('.header-value').forEach(input => {
+                input.placeholder = i18next.t('value_label');
+            });
+        }
+
+        let intervalId = null;
+        let paramCount = 1;
+        let headerCount = 2;
+        let isRepeating = false;
+        let totalRequests = 0;
+        let requestTimestamps = [];
+
+        function toggleSection(contentId, toggleId) {
+            const content = document.getElementById(contentId);
+            const toggleIcon = document.getElementById(toggleId);
+            content.classList.toggle('show');
+            toggleIcon.innerHTML = content.classList.contains('show') ? '<i class="fas fa-chevron-up"></i>' : '<i class="fas fa-chevron-down"></i>';
+        }
+
+        function toggleHeadersInput() {
+            const format = document.querySelector('input[name="headers-format"]:checked').value;
+            document.getElementById('headers-fields').classList.toggle('hidden', format !== 'fields');
+            document.getElementById('headers-json').classList.toggle('hidden', format !== 'json');
+        }
+
+        function toggleDataInput() {
+            const format = document.querySelector('input[name="data-format"]:checked').value;
+            document.getElementById('data-fields').classList.toggle('hidden', format !== 'fields');
+            document.getElementById('data-json').classList.toggle('hidden', format !== 'json');
+        }
+
+        function addHeaderRow() {
+            const table = document.getElementById('header-table');
+            const row = table.insertRow(-1);
+            row.innerHTML = `
+                <td class="p-2"><input type="text" class="table-input header-name" placeholder="${i18next.t('name_label')}"></td>
+                <td class="p-2"><input type="text" class="table-input header-value" placeholder="${i18next.t('value_label')}"></td>
+            `;
+            headerCount++;
+        }
+
+        function addParamRow() {
+            const table = document.getElementById('param-table');
+            const row = table.insertRow(-1);
+            row.innerHTML = `
+                <td class="p-2"><input type="text" class="table-input param-name" placeholder="${i18next.t('name_label')}"></td>
+                <td class="p-2"><input type="text" class="table-input param-value" placeholder="${i18next.t('value_label')}"></td>
+            `;
+            paramCount++;
+        }
+
+        async function sendRequest() {
+            const form = document.getElementById('post-form');
+            const url = document.getElementById('url').value;
+            const method = document.getElementById('method').value;
+            const enctype = document.getElementById('enctype').value;
+            const interval = parseFloat(document.getElementById('interval').value) * 1000;
+            const headersFormat = document.querySelector('input[name="headers-format"]:checked').value;
+            const dataFormat = document.querySelector('input[name="data-format"]:checked').value;
+
+            if (!url) {
+                alert(i18next.t('url_label') + ' is required');
+                return;
+            }
+
+            let headers = {};
+            if (headersFormat === 'fields') {
+                const headerNames = document.querySelectorAll('.header-name');
+                const headerValues = document.querySelectorAll('.header-value');
+                headerNames.forEach((nameInput, index) => {
+                    if (nameInput.value) {
+                        headers[nameInput.value] = headerValues[index].value || '';
+                    }
+                });
+            } else {
+                try {
+                    headers = JSON.parse(document.getElementById('headers-json-input').value || '{}');
+                } catch (e) {
+                    alert('Invalid JSON format for headers');
+                    return;
+                }
+            }
+
+            let params = [];
+            let body = null;
+            if (dataFormat === 'fields') {
+                const names = document.querySelectorAll('.param-name');
+                const values = document.querySelectorAll('.param-value');
+                names.forEach((nameInput, index) => {
+                    if (nameInput.value) {
+                        params.push({ name: nameInput.value, value: values[index].value || '' });
+                    }
+                });
+                if (enctype === 'application/json') {
+                    body = JSON.stringify(Object.fromEntries(params.map(p => [p.name, p.value])));
+                } else {
+                    body = new URLSearchParams(params);
+                }
+            } else {
+                try {
+                    const jsonData = JSON.parse(document.getElementById('data-json-input').value || '{}');
+                    params = Object.entries(jsonData).map(([name, value]) => ({ name, value }));
+                    body = enctype === 'application/json' ? JSON.stringify(jsonData) : new URLSearchParams(jsonData);
+                } catch (e) {
+                    alert('Invalid JSON format for data');
+                    return;
+                }
+            }
+
+            totalRequests++;
+            requestTimestamps.push(Date.now());
+            updateStats();
+
+            let responseText = '';
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: headers,
+                    body: method === 'POST' ? body : null
+                });
+
+                responseText = await response.text();
+
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
+                });
+
+                const logEntry = {
+                    timestamp: new Date().toLocaleString(),
+                    url: url,
+                    method: method,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: responseHeaders,
+                    params: params,
+                    requestHeaders: headers,
+                    responseBody: responseText.substring(0, 1000)
+                };
+
+                addLogEntry(logEntry);
+            } catch (error) {
+                const logEntry = {
+                    timestamp: new Date().toLocaleString(),
+                    url: url,
+                    method: method,
+                    status: 'Error',
+                    statusText: error.message,
+                    headers: {},
+                    params: params,
+                    requestHeaders: headers,
+                    responseBody: 'N/A'
+                };
+                addLogEntry(logEntry);
+            }
+
+            form.action = url;
+            form.method = method;
+            form.enctype = enctype;
+
+            const inputs = form.querySelectorAll('input[type=hidden]');
+            inputs.forEach(input => input.remove());
+
+            params.forEach(param => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = param.name;
+                input.value = param.value;
+                form.appendChild(input);
+            });
+
+            form.submit();
+
+            if (interval > 0) {
+                stopInterval();
+                isRepeating = true;
+                updateButtonStates();
+                intervalId = setInterval(() => {
+                    totalRequests++;
+                    requestTimestamps.push(Date.now());
+                    updateStats();
+                    form.submit();
+                    logRequest(url, method, params, headers);
+                }, interval);
+            }
+        }
+
+        function logRequest(url, method, params, headers) {
+            const logEntry = {
+                timestamp: new Date().toLocaleString(),
+                url: url,
+                method: method,
+                status: 'Sent (repeat)',
+                statusText: 'Repeat request',
+                headers: {},
+                params: params,
+                requestHeaders: headers,
+                responseBody: 'N/A'
+            };
+            addLogEntry(logEntry);
+        }
+
+        function addLogEntry(entry) {
+            const logEntries = document.getElementById('log-entries');
+            const entryDiv = document.createElement('div');
+            const logId = `log-${Date.now()}`;
+            entryDiv.classList.add('mb-4', 'text-gray-700');
+            entryDiv.innerHTML = `
+                <div class="log-entry-header" onclick="toggleLogEntry('${logId}')">
+                    <strong>Request:</strong> ${entry.timestamp} [${entry.method}] ${entry.url}
+                    <span id="${logId}-toggle"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="log-entry-content" id="${logId}">
+                    <strong>URL:</strong> ${entry.url}<br>
+                    <strong>Method:</strong> ${entry.method}<br>
+                    <strong>Status:</strong> ${entry.status} ${entry.statusText}<br>
+                    <strong>Parameters:</strong> ${entry.params.map(p => `${p.name}=${p.value}`).join(', ') || 'None'}<br>
+                    <strong>Request Headers:</strong> <pre>${JSON.stringify(entry.requestHeaders, null, 2)}</pre><br>
+                    <strong>Response Headers:</strong> <pre>${JSON.stringify(entry.headers, null, 2)}</pre><br>
+                    <strong>Response Body:</strong> <pre>${entry.responseBody}</pre>
+                </div>
+            `;
+            logEntries.prepend(entryDiv);
+        }
+
+        function toggleLogEntry(logId) {
+            const content = document.getElementById(logId);
+            const toggleIcon = document.getElementById(`${logId}-toggle`);
+            content.classList.toggle('show');
+            toggleIcon.innerHTML = content.classList.contains('show') ? '<i class="fas fa-chevron-up"></i>' : '<i class="fas fa-chevron-down"></i>';
+        }
+
+        function updateStats() {
+            const now = Date.now();
+            const recentRequests = requestTimestamps.filter(ts => now - ts < 1000).length;
+            document.getElementById('req-per-sec').textContent = recentRequests;
+            document.getElementById('total-req').textContent = totalRequests;
+            requestTimestamps = requestTimestamps.filter(ts => now - ts < 1000);
+        }
+
+        function clearForm() {
+            document.getElementById('post-form').reset();
+            document.getElementById('config-form').reset();
+            document.getElementById('url').value = 'https://example.com';
+            document.getElementById('interval').value = '-1';
+            document.getElementById('headers-json-input').value = '';
+            document.getElementById('data-json-input').value = '';
+            const paramTable = document.getElementById('param-table');
+            while (paramTable.rows.length > 2) {
+                paramTable.deleteRow(-1);
+            }
+            const headerTable = document.getElementById('header-table');
+            while (headerTable.rows.length > 2) {
+                headerTable.deleteRow(-1);
+            }
+            headerTable.rows[1].cells[0].querySelector('input').value = 'Accept';
+            headerTable.rows[1].cells[1].querySelector('input').value = 'application/json';
+            headerTable.rows[2].cells[0].querySelector('input').value = 'Content-Type';
+            headerTable.rows[2].cells[1].querySelector('input').value = 'application/json';
+            paramCount = 1;
+            headerCount = 2;
+            stopInterval();
+            document.getElementById('response-frame').src = 'about:blank';
+            document.getElementById('log-entries').innerHTML = '';
+            totalRequests = 0;
+            requestTimestamps = [];
+            updateStats();
+        }
+
+        function stopInterval() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+                isRepeating = false;
+                updateButtonStates();
+            }
+        }
+
+        function updateButtonStates() {
+            const sendBtn = document.getElementById('send-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            if (isRepeating) {
+                sendBtn.classList.add('running');
+                sendBtn.textContent = i18next.t('send') + ' (Running)';
+                stopBtn.classList.add('running');
+            } else {
+                sendBtn.classList.remove('running');
+                sendBtn.textContent = i18next.t('send');
+                stopBtn.classList.remove('running');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePlaceholders();
+        });
+    </script>
+</body>
+</html>
